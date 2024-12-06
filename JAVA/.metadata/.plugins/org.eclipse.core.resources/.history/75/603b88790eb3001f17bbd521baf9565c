@@ -1,0 +1,4 @@
+db.url=jdbc:mysql://localhost:3306/Learning_Path
+db.user=root
+db.password=root
+

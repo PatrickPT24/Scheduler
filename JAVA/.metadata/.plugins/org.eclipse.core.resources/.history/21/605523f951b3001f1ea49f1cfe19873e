@@ -1,0 +1,83 @@
+package main;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.table.*;
+import java.sql.*;
+
+public class Dashboard extends JFrame {
+    private String userEmail;
+    private JTable taskTable;
+    private JLabel statusBar;
+
+    public Dashboard(String email) {
+        this.userEmail = email;
+        setTitle("Dashboard");
+        setSize(900, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Welcome Label
+        JLabel welcomeLabel = new JLabel("Welcome, " + email);
+        welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
+        // Task Table
+        taskTable = new JTable();
+        loadTasks();
+
+        // Status Bar
+        statusBar = new JLabel("Total Tasks: 0");
+        statusBar.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Add components
+        add(welcomeLabel, BorderLayout.NORTH);
+        add(new JScrollPane(taskTable), BorderLayout.CENTER);
+        add(statusBar, BorderLayout.SOUTH);
+
+        // Logout Button
+        JPanel bottomPanel = new JPanel();
+        JButton logoutButton = new JButton("Logout");
+        logoutButton.addActionListener(e -> logout());
+        bottomPanel.add(logoutButton);
+        add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    private void loadTasks() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM tasks WHERE assigned_to = ?")) {
+            stmt.setString(1, userEmail);
+
+            ResultSet rs = stmt.executeQuery();
+            DefaultTableModel model = new DefaultTableModel(
+                new String[] { "Task Name", "Assigned Date", "Due Date", "Status", "Assigned To" }, 0);
+
+            int taskCount = 0;
+            while (rs.next()) {
+                model.addRow(new Object[] {
+                    rs.getString("task_name"),
+                    rs.getDate("assigned_date"),
+                    rs.getDate("due_date"),
+                    rs.getString("status"),
+                    rs.getString("assigned_to")
+                });
+                taskCount++;
+            }
+
+            taskTable.setModel(model);
+            statusBar.setText("Total Tasks: " + taskCount);
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error loading tasks: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void logout() {
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to log out?", "Logout", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            new Login().setVisible(true);
+            this.dispose();
+        }
+    }
+}

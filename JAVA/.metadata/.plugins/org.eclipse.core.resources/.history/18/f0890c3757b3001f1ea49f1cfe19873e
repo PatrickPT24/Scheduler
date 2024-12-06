@@ -1,0 +1,10 @@
+/**
+ * 
+ */
+/**
+ * 
+ */
+module Scheduler {
+	requires java.sql;
+	requires java.desktop;
+}
